@@ -14,14 +14,14 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml* ./
 COPY prisma ./prisma/
 
-# Instalar dependencias
-RUN pnpm install --frozen-lockfile
+# Instalar dependencias (incluyendo devDependencies para build)
+RUN pnpm install
 
 # Copiar código fuente
 COPY . .
 
 # Generar cliente Prisma y compilar
-RUN pnpm prisma generate
+RUN npx prisma generate
 RUN pnpm run build
 
 # Etapa 2: Producción
@@ -34,14 +34,16 @@ WORKDIR /app
 
 # Copiar archivos de dependencias
 COPY package.json pnpm-lock.yaml* ./
+COPY prisma ./prisma/
 
-# Instalar solo dependencias de producción
-RUN pnpm install --prod --frozen-lockfile
+# Instalar dependencias de producción
+RUN pnpm install --prod
 
-# Copiar archivos necesarios del builder
+# Generar Prisma Client en producción
+RUN npx prisma generate
+
+# Copiar archivos compilados del builder
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 # Variables de entorno
 ENV NODE_ENV=production
@@ -51,4 +53,4 @@ ENV PORT=3000
 EXPOSE 3000
 
 # Comando para iniciar
-CMD ["sh", "-c", "pnpm prisma migrate deploy && node dist/src/main.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
