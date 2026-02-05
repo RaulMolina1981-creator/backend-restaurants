@@ -39,8 +39,9 @@ COPY prisma ./prisma/
 # Instalar dependencias de producción
 RUN pnpm install --prod
 
-# Generar Prisma Client en producción
-RUN npx prisma generate
+# Copiar Prisma Client generado desde builder (evita descargar Prisma 7)
+COPY --from=builder /app/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/@prisma/client ./node_modules/@prisma/client
+COPY --from=builder /app/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma ./node_modules/.prisma
 
 # Copiar archivos compilados del builder
 COPY --from=builder /app/dist ./dist
@@ -52,5 +53,5 @@ ENV PORT=3000
 # Exponer puerto
 EXPOSE 3000
 
-# Comando para iniciar
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
+# Comando para iniciar (sin migrate deploy para evitar Prisma 7)
+CMD ["node", "dist/src/main.js"]
