@@ -2,8 +2,11 @@
 # Dockerfile - Backend Restaurantes (NestJS)
 # ===========================================
 
-# Etapa 1: Build
-FROM node:20-alpine AS builder
+# Etapa 1: Build (Debian para compatibilidad con Prisma)
+FROM node:20-slim AS builder
+
+# Instalar OpenSSL y dependencias de build
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 # Instalar pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -24,11 +27,11 @@ COPY . .
 RUN npx prisma generate
 RUN pnpm run build
 
-# Etapa 2: Producción
-FROM node:20-alpine AS production
+# Etapa 2: Producción (Debian para compatibilidad con Prisma OpenSSL)
+FROM node:20-slim AS production
 
-# Instalar OpenSSL 1.1 compatible (requerido por Prisma)
-RUN apk add --no-cache openssl1.1-compat
+# Instalar OpenSSL (Debian ya incluye versión compatible)
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 # Instalar pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
