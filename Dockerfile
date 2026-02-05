@@ -27,6 +27,9 @@ RUN pnpm run build
 # Etapa 2: Producción
 FROM node:20-alpine AS production
 
+# Instalar OpenSSL 1.1 compatible (requerido por Prisma)
+RUN apk add --no-cache openssl1.1-compat
+
 # Instalar pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
